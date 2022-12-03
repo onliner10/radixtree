@@ -7,8 +7,9 @@
 A generic and fast immutable radix tree, using [algebra](https://github.com/non/algebra) and [cats](https://github.com/non/cats) typeclasses.
 
 ## Simple usage example
+
 ```scala
-import com.rklaehn.radixtree._
+
 import scala.io.Source
 
 val words = Source.fromURL("http://www-01.sil.org/linguistics/wordlists/english/wordlist/wordsEn.txt").getLines.toArray
@@ -21,7 +22,7 @@ println(tree.filterPrefix("z").keys.take(10))
 ## Word count using AdditiveMonoid instance
 
 ```scala
-import com.rklaehn.radixtree._
+
 import algebra.ring.AdditiveMonoid
 import algebra.std.all._
 import scala.io.Source
@@ -29,7 +30,7 @@ import scala.io.Source
 val text = Source.fromURL("http://classics.mit.edu/Homer/odyssey.mb.txt").getLines
 val words = text.flatMap(_.split(' ')).filterNot(_.isEmpty)
 val m = AdditiveMonoid[RadixTree[String, Int]]
-val count = words.map(x ⇒ RadixTree(x → 1)).reduce(m.plus)
+val count = words.map(x => RadixTree(x -> 1)).reduce(m.plus)
 println(count.entries.take(10))
 ```
 
@@ -38,8 +39,9 @@ println(count.entries.take(10))
 None of the methods of java.lang.Object are implemented on RadixTree. Use cats.Show to get a textual representation:
 
 ```scala
-import com.rklaehn.radixtree._
+
 import cats.implicits._
+
 println(RadixTree("a" -> 1).show)
 ```
 

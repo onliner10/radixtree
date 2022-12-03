@@ -2,18 +2,15 @@ import ReleaseTransformations._
 
 lazy val commonSettings = Seq(
   organization := "com.rklaehn",
-  scalaVersion := "2.12.6",
-  crossScalaVersions := Seq("2.11.12", "2.12.6"),
+  scalaVersion := "3.2.1",
+  crossScalaVersions := Seq("2.13.10", "3.0.2", "3.1.3", "3.2.1"),
   libraryDependencies ++= Seq(
-    "org.scala-lang" % "scala-reflect" % scalaVersion.value % "provided",
-    "com.rklaehn" %%% "sonicreducer" % "0.5.0",
-    "org.typelevel" %%% "cats-core" % "1.0.1",
-    "org.typelevel" %%% "algebra" % "1.0.0",
-    "org.typelevel" %%% "algebra-laws" % "1.0.0" % "test",
-    "org.scalatest" %%% "scalatest" % "3.0.1" % "test",
-
-    // thyme
-    "ichi.bench" % "thyme" % "0.1.1" % "test" from "https://github.com/Ichoran/thyme/raw/9ff531411e10c698855ade2e5bde77791dd0869a/Thyme.jar"
+    "org.typelevel" %%% "cats-core" % "2.9.0",
+    "org.typelevel" %%% "algebra" % "2.9.0",
+    "com.rklaehn" %%% "sonicreducer" % "1.0.0",
+    "org.typelevel" %%% "algebra-laws" % "2.9.0" % "test",
+    "org.scalatest" %%% "scalatest" % "3.2.14" % "test",
+    "org.typelevel" %% "discipline-scalatest" % "2.2.0" % "test"
   ),
   scalacOptions ++= Seq(
     "-deprecation",
@@ -28,7 +25,7 @@ lazy val commonSettings = Seq(
   releaseCrossBuild := true,
   releasePublishArtifactsAction := PgpKeys.publishSigned.value,
   publishMavenStyle := true,
-  publishArtifact in Test := false,
+  Test / publishArtifact := false,
   publishTo := sonatypePublishTo.value,
   pomIncludeRepository := Function.const(false),
   publishTo := {
@@ -70,13 +67,12 @@ lazy val noPublish = Seq(
   publishLocal := {},
   publishArtifact := false)
 
-lazy val root = project.in(file("."))
-  .aggregate(coreJVM, coreJS, instrumentedTest)
+lazy val root = coreAggregate
   .settings(name := "root")
   .settings(commonSettings: _*)
   .settings(noPublish: _*)
 
-lazy val core = crossProject.crossType(CrossType.Pure).in(file("."))
+lazy val core = crossProject(JSPlatform, JVMPlatform).in(file("."))
   .settings(name := "radixtree")
   .settings(commonSettings: _*)
 
@@ -93,7 +89,7 @@ lazy val instrumentedTestSettings = {
     s"-javaagent:$jammJar"
   }
   Seq(
-    javaOptions in Test += makeAgentOptions((dependencyClasspath in Test).value),
+    Test / javaOptions += makeAgentOptions((Test / dependencyClasspath).value),
       libraryDependencies += "com.github.jbellis" % "jamm" % "0.3.0" % "test",
       fork := true
     )
@@ -101,3 +97,13 @@ lazy val instrumentedTestSettings = {
 
 lazy val coreJVM = core.jvm
 lazy val coreJS = core.js
+lazy val coreAggregate =
+  project.in(file("."))
+    .aggregate(coreJVM, coreJS)
+
+lazy val bench = (project in file("bench"))
+  .settings(noPublish: _*)
+  .settings(commonSettings: _*)
+  .settings(name := "bench")
+  .dependsOn(coreAggregate % "test -> test")
+  .enablePlugins(JmhPlugin)

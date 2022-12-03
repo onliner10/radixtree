@@ -1,6 +1,6 @@
 package com.rklaehn.radixtree
 
-import algebra.{Monoid, Eq}
+import algebra.{Eq, Monoid}
 import algebra.instances.array.arrayEq
 import algebra.instances.byte._
 import algebra.instances.char._
@@ -11,11 +11,10 @@ import algebra.instances.tuple._
 import algebra.instances.unit._
 import algebra.ring.AdditiveMonoid
 import cats.kernel.Hash
-import org.scalatest.FunSuite
-
 import Instances._
+import org.scalatest.funsuite.AnyFunSuite
 
-class RadixTreeTest extends FunSuite {
+class RadixTreeTest extends AnyFunSuite {
 
   implicit class StringOps(underlying: String) {
     def toBytes = underlying.getBytes("UTF-8")
@@ -90,6 +89,7 @@ class RadixTreeTest extends FunSuite {
 
   test("equals") {
     intercept[UnsupportedOperationException] {
+      //noinspection ComparingUnrelatedTypes
       tree.equals("foo")
     }
     assert(Eq.eqv(tree, RadixTree(kvs: _*)))
@@ -100,6 +100,7 @@ class RadixTreeTest extends FunSuite {
 
   test("hashCode") {
     intercept[UnsupportedOperationException] {
+      //noinspection EmptyParenMethodAccessedAsParameterless
       tree.hashCode
     }
     assert(Hash.hash(tree) === Hash.hash(RadixTree(kvs: _*)))
@@ -107,14 +108,14 @@ class RadixTreeTest extends FunSuite {
   }
 
   test("mapValues") {
-    assert(Eq.eqv(RadixTree("1" → 1, "11" → 11).mapValues(_.toString), RadixTree("1" → "1", "11" → "11")))
+    assert(Eq.eqv(RadixTree("1" -> 1, "11" -> 11).mapValues(_.toString), RadixTree("1" -> "1", "11" -> "11")))
   }
 
   test("toString") {
     import cats.implicits._
-    assert(!RadixTree("1" -> 1).toString.isEmpty)
-    assert(!RadixTree("1" -> 1).printStructure.isEmpty)
-    assert(!RadixTree("1" -> 1).show.isEmpty)
+    assert(RadixTree("1" -> 1).toString.nonEmpty)
+    assert(RadixTree("1" -> 1).printStructure.nonEmpty)
+    assert(RadixTree("1" -> 1).show.nonEmpty)
   }
 
   test("startsWith") {
@@ -153,13 +154,13 @@ class RadixTreeTest extends FunSuite {
   test("packed") {
     assert(Eq.eqv(tree, tree.packed))
     assert(Eq.eqv(tree1k, tree1k.packed))
-    val strings = (0 until 100).map(x => "%03d".format(x) -> (()))
+    val strings = (0 until 100).map(x => "%03d".format(x) -> ())
     val t = RadixTree(strings: _*).packed
     assert(t.children(0).children(0) eq t.children(1).children(0))
   }
 
   test("keys") {
-    assert(kvs.map(_._1).toSet === tree.keys.toSet)
+    assert(tree.keys.toSet === kvs.map(_._1).toSet )
   }
 
   test("values") {
@@ -167,7 +168,7 @@ class RadixTreeTest extends FunSuite {
   }
 
   test("filterPrefix") {
-    assert(kvs.filter { case (k, v) => k.startsWith("1") }.toSeq === tree.filterPrefix("1").entries.toSeq)
+    assert(kvs.filter { case (k, v) => k.startsWith("1") } === tree.filterPrefix("1").entries.toSeq)
     assert(RadixTree("1" -> 1).filterPrefix("foo").isEmpty)
     assert(RadixTree("1" -> 1, "12" -> 12).filterPrefix("123").isEmpty)
   }
@@ -192,7 +193,7 @@ class RadixTreeTest extends FunSuite {
   }
 
   test("filter") {
-    assert(kvs.filter { case (k, v) => k.startsWith("1") }.toSeq === tree.filter { case (k, v) => k.startsWith("1") }.entries.toSeq)
+    assert(kvs.filter { case (k, v) => k.startsWith("1") } === tree.filter { case (k, v) => k.startsWith("1") }.entries.toSeq)
   }
 
   test("filterKeysContaining1") {
@@ -265,17 +266,18 @@ class RadixTreeTest extends FunSuite {
     assert(RadixTree.arrayIsKey[Byte].neqv("a".toBytes, "b".toBytes))
   }
   test("monoid") {
-    val entries = (0 until 100).map(x => x.toString -> (()))
+    val entries = (0 until 100).map(x => x.toString -> ())
     val singles = entries.map { case (k, v) => RadixTree.singleton(k, v) }
     assert(Eq.eqv(RadixTree(entries: _*), Monoid[RadixTree[String, Unit]].combineAll(singles)))
   }
   test("wordCount") {
     import scala.io.Source
-    val text = Source.fromURL("http://classics.mit.edu/Homer/odyssey.mb.txt").getLines
+    val odysseySource = Source.fromURL("http://classics.mit.edu/Homer/odyssey.mb.txt")
+    val text = odysseySource.getLines
     val words = text.flatMap(_.split(' ')).filterNot(_.isEmpty)
     val m = AdditiveMonoid[RadixTree[String, Int]]
-    val count = words.map(x ⇒ RadixTree(x → 1)).reduce(m.plus)
-    println(count.entries.take(10))
+    val count = words.map(x => RadixTree(x -> 1)).reduce(m.plus)
+    odysseySource.close()
   }
   test("arrayEq") {
     assert(!arrayEqv(Array(1,2), Array(1,3)))

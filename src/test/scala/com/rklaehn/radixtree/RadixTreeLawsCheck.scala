@@ -2,17 +2,18 @@ package com.rklaehn.radixtree
 
 import algebra.instances.all._
 import org.scalacheck.Arbitrary
-import org.scalatest.FunSuite
-import org.typelevel.discipline.scalatest.Discipline
+import org.typelevel.discipline.scalatest.FunSuiteDiscipline
 import Instances._
 import algebra.laws.RingLaws
 import cats.kernel.laws.discipline.MonoidTests
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.scalacheck.Checkers
 
-class RadixTreeLawsCheck extends FunSuite with Discipline {
+class RadixTreeLawsCheck extends AnyFunSuite with FunSuiteDiscipline with Checkers {
 
   implicit def arbRadixTree[K: Arbitrary : RadixTree.Key, V: Arbitrary]: Arbitrary[RadixTree[K, V]] = Arbitrary {
     for {
-      kvs ← Arbitrary.arbitrary[List[(K, V)]]
+      kvs <- Arbitrary.arbitrary[List[(K, V)]]
     } yield
     RadixTree(kvs: _*)
   }

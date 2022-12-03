@@ -1,13 +1,11 @@
 package com.rklaehn.radixtree
 
 import algebra.Eq
-
-import scala.util.hashing.Hashing
 import cats.kernel.Hash
 
 private object Memo {
 
-  def fromFunction[A: Hash](f: A ⇒ A): A ⇒ A = new (A ⇒ A) {
+  def fromFunction[A: Hash](f: A => A): A => A = new (A => A) {
 
     val memo = new scala.collection.mutable.AnyRefMap[Element[A], Element[A]]
 
@@ -17,7 +15,7 @@ private object Memo {
     }
   }
 
-  def simple[A: Hash]: A ⇒ A = new (A ⇒ A) {
+  def simple[A: Hash]: A => A = new (A => A) {
 
     val memo = new scala.collection.mutable.AnyRefMap[Element[A], Element[A]]
 
